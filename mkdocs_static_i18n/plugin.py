@@ -511,6 +511,10 @@ class I18n(BasePlugin):
         """
         Translate i18n aware navigation to honor the 'nav_translations' option.
         """
+        # temp fix for mkdocs-jupyter
+        if not isinstance(files, I18nFiles):
+            return nav
+            
         if not files.translated and self.config["nav_translations"].get(files.locale):
             log.info(f"Translating navigation to {files.locale}")
             self._translate_navigation(files.locale, nav)

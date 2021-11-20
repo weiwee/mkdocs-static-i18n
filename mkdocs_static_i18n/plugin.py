@@ -199,9 +199,9 @@ class I18n(BasePlugin):
             ).with_suffix(".html")
             i18n_page.url = page.url.replace(page.name, i18n_page.name) or "."
         else:
-            # index files do not exhibit a named folder
+            # index and readme files do not exhibit a named folder
             # whereas named files do!
-            if i18n_page.name == "index":
+            if i18n_page.name == "index" or i18n_page.name == "README":
                 i18n_page.dest_path = i18n_page.dest_path.parent.with_suffix(".html")
                 i18n_page.abs_dest_path = i18n_page.abs_dest_path.parent.with_suffix(
                     ".html"
@@ -209,7 +209,6 @@ class I18n(BasePlugin):
                 i18n_page.url = str(Path(i18n_page.dest_path).parent.as_posix()) + "/"
                 if i18n_page.url == "./":
                     i18n_page.url = "."
-
             else:
                 i18n_page.dest_path = i18n_page.dest_path.parent.with_suffix(
                     ""
@@ -218,6 +217,20 @@ class I18n(BasePlugin):
                     ""
                 ).joinpath(i18n_page.abs_dest_path.name)
                 i18n_page.url = str(Path(i18n_page.dest_path).parent.as_posix()) + "/"
+
+        # treat README as index, see #63
+        if i18n_page.name == "README":
+            try:
+                i18n_page.dest_path = i18n_page.dest_path.with_stem("index")
+                i18n_page.abs_dest_path = i18n_page.abs_dest_path.with_stem("index")
+            except AttributeError:
+                # python3.6 does not have with_stem()
+                i18n_page.dest_path = Path(
+                    str(i18n_page.dest_path).replace("README", "index")
+                )
+                i18n_page.abs_dest_path = Path(
+                    str(i18n_page.abs_dest_path).replace("README", "index")
+                )
 
         return i18n_page
 
@@ -363,7 +376,22 @@ class I18n(BasePlugin):
                                 "lang": language,
                             }
                         )
-                self.material_alternates = config["extra"].get("alternate")
+                elif "alternate" in config["extra"]:
+                    for alternate in config["extra"]["alternate"]:
+                        if not alternate.get("link", "").startswith("./"):
+                            log.info(
+                                "The 'extra.alternate' configuration contains a "
+                                "'link' option that should starts with './' in "
+                                f"{alternate}"
+                            )
+
+                if "navigation.instant" in config["theme"]._vars.get("features", []):
+                    log.warning(
+                        "mkdocs-material language switcher contextual link is not "
+                        "compatible with theme.features = navigation.instant"
+                    )
+                else:
+                    self.material_alternates = config["extra"].get("alternate")
         # Support for the search plugin lang
         if "search" in config["plugins"]:
             search_langs = config["plugins"]["search"].config["lang"] or []
@@ -379,6 +407,24 @@ class I18n(BasePlugin):
                         f"Language '{language}' is not supported by "
                         f"lunr.js, not setting it in the 'plugins.search.lang' option"
                     )
+        # Report misconfigured nav_translations, see #66
+        if self.config["nav_translations"]:
+            for lang in self.config["languages"]:
+                if lang in self.config["nav_translations"]:
+                    break
+            else:
+                log.info(
+                    "Ignoring 'nav_translations' option: expected a language key "
+                    f"from {list(self.config['languages'].keys())}, got "
+                    f"{list(self.config['nav_translations'].keys())}"
+                )
+                self.config["nav_translations"] = {}
+            if "awesome-pages" in config["plugins"] and self.config["nav_translations"]:
+                log.info(
+                    "Ignoring 'nav_translations' option: the 'awesome-pages' "
+                    "plugin breaks the ability to translate navigation titles"
+                )
+                self.config["nav_translations"] = {}
         return config
 
     def on_files(self, files, config):

@@ -216,6 +216,9 @@ plugins:
           Topic2: Sujet2
 ```
 
+**NOTE**: this option [is not compatible](https://github.com/ultrabug/mkdocs-static-i18n/issues/65)
+with the `awesome-pages` plugin!
+
 ## Localized content can diverge from the default version
 
 Since version 0.20 of the plugin, localized content can diverge from the
@@ -248,7 +251,7 @@ build.
 This plugin is compatible with the following mkdocs plugins:
 
 - [MkDocs Material](https://github.com/squidfunk/mkdocs-material): the `search` plugin text will be switched automatically to the right language depending on the version you're browsing and the `language selector` will automatically be setup for you (requires mkdocs-material>=7.1.0)
-- [MkDocs Awesome Pages Plugin](https://github.com/lukasgeiter/mkdocs-awesome-pages-plugin): the page ordering is preserved on the language specific versions of your site
+- [MkDocs Awesome Pages Plugin](https://github.com/lukasgeiter/mkdocs-awesome-pages-plugin): the page ordering is preserved on the language specific versions of your site [but it prevents the 'nav_translations' option to work](https://github.com/ultrabug/mkdocs-static-i18n/issues/65)
 
 ## Adding a language selector on your documentation header
 
@@ -258,7 +261,7 @@ Starting version 7.1.0, [mkdocs-material supports a site language selector](http
 
 The `mkdocs-static-i18n` plugin will detect if you're using `mkdocs-material` and, if its version is at least `7.1.0`, **will enable and configure the site language selector automatically for you** unless you specified your own `extra.alternate` configuration!
 
-Even better, `mkdocs-static-i18n` will also make it so that changing between languages keeps you on the same page instead of getting you back to the language specific home page!
+Even better, `mkdocs-static-i18n` will also make it so that changing between languages keeps you on the same page instead of getting you back to the language specific home page (not compatible with theme.features = navigation.instant, [see #62](https://github.com/ultrabug/mkdocs-static-i18n/issues/62))!
 
 If you wish to disable that feature, simply set the `material_alternate` option to `false`:
 
